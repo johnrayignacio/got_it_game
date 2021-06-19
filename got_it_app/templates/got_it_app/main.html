@@ -1,0 +1,282 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins" rel="stylesheet">
+
+    <link rel="icon" href="https://assets.stickpng.com/images/580b585b2edbce24c47b23f1.png">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+        html{
+            scroll-behavior: smooth;
+        }
+        body{
+            font-family: 'Poppins';
+            padding: 0;
+            background: #f8f5ec;
+        }
+        p{
+            font-family: 'Open Sans'
+        }
+        .first-word{
+            color: black;
+            font-weight: 800;
+        }
+        .first-word.light{
+            color: gray;
+            font-weight: 800;
+            display: none;
+        }
+        .announcement{
+            display: none;
+        }
+        .first-word.temp{
+            display: block;
+            color: gray;
+            font-weight: 800;
+        }
+        .second-word{
+            color: orange;
+            font-weight: 800;
+        }
+        .second-word.light{
+            color: gray;
+            font-weight: 800;
+            display: none;
+        }
+        .second-word.temp{
+            display: block;
+            color: gray;
+            font-weight: 800;
+        }
+
+        .alert{
+            color:green;
+            display: none;
+        }
+        h2{
+            color: green;
+        }
+    </style>
+
+    <title>Got it!</title>
+
+</head>
+<body>
+    <div class="container my-5 text-center">
+        <h1>Got it!</h1>
+        <br>
+        <p><strong>Instructions: </strong> First, input a word, and click ready. Once you have the first set of words already, think of another word that's related to the first set. The goal is for you to come up with the same word.</p>
+    </div>
+
+    <!-- <form action=""> -->
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-6">
+                <h3>Player 1</h3>
+                <input id="text1" type="text" class="form-control w-75 mx-auto">
+
+                <a href="">
+                <div id="submit1" class="submit btn btn-lg btn-success w-75 mt-4">Play Word</div>
+                </a>
+
+                <div class="container first-event mt-4">
+                    <h2>Word played:</h2>
+                    <h3 class="first-word light" id="first1"></h3>
+                    <h3 class="first-word temp" id="temp1"></h3>
+                    <h3 class="second-word light" id="second1"></h3>
+                    <h3 class="second-word temp" id="temp3"></h3>
+                    <h6 class="alert" id="alert1">Player 1 has played a word already</h6>
+                </div>
+            </div>
+            <div class="col-6">
+                <h3>Player 2</h3>
+                <input id="text2" type="text" class="form-control w-75 mx-auto">
+
+                <a href="">
+                <div id="submit2" class="submit btn btn-lg btn-success w-75 mt-4">Play Word</div>
+                </a>
+
+                <div class="container first-event mt-4">
+                    <h2>Word played:</h2>
+                    <h3 class="first-word light" id="first2"></h3>
+                    <h3 class="first-word temp" id="temp2"></h3>
+                    <h3 class="second-word light" id="second2"></h3>
+                    <h3 class="second-word temp" id="temp4"></h3>
+                    <h6 class="alert" id="alert2">Player 2 has played a word already</h6>
+                </div>
+            </div>
+        </div>
+        <div class="container text-center mt-2 announcement">
+            <h5>Play the second word related to both of your first words. You should be able to think of the same thing.</h5>
+        </div>
+        <div class="container">
+            <button id="reset" class="btn btn-lg btn-danger my-5 w-100">RESET</button>
+        </div>
+    </div>
+    <!-- </form> -->
+
+    <!-- <div id="user-hello"></div> -->
+
+    {{ room_name|json_script:"room-name" }}
+
+    <script>
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+
+        const chatSocket = new WebSocket(
+            'ws://' +
+            window.location.host +
+            '/ws/room/' +
+            roomName +
+            '/'
+        );
+
+        var second = false;
+
+        var first_played1 = false;
+        var first_played2 = false;
+
+        var second_played1 = false;
+        var second_played2 = false;
+
+        chatSocket.onmessage = function(e){
+            const data = JSON.parse(e.data)
+
+            if (data.reset === null) {
+                console.log('reset')
+                second = false;
+
+                first_played1 = false;
+                first_played2 = false;
+
+                second_played1 = false;
+                second_played2 = false;
+
+                $(".announcement").css("display", "none");
+                $('.first-word').addClass('light');
+                $('.second-word').addClass('light');
+                $(".temp").css("display", "block");
+
+                $('.temp').html('');
+                $('.submit').html('Play Word')
+                $(".alert").css('display', 'none');
+
+                // alert('Game has been reset by a player');
+            }
+
+
+            if (second) {
+                $('.submit').html('Got it!')
+
+                if (data.text1 !== undefined && data.text1 !== null) {
+                    second_played1 = true;
+                    $('#alert1').css('display', 'block');
+                } else if (data.text2 !== undefined && data.text2 !== null) {
+                    second_played2 = true;
+                    $('#alert2').css('display', 'block');
+                }
+
+                if (second_played1 && second_played2) {
+                    $('.second-word').removeClass('light');
+                    console.log('complete')
+
+                    $(".announcement").css("display", "block");
+                    $(".temp").css("display", "none");
+                    $(".alert").css('display', 'none');
+                    $('.submit').html('Got it!');
+
+                    second = true;
+                    
+                }
+
+                $('#second1').html(data.text1);
+                $('#second2').html(data.text2);
+
+            } else {
+                if (data.text1 !== undefined && data.text1 !== null) {
+                    first_played1 = true;
+                    $('#alert1').css('display', 'block');
+                } else if (data.text2 !== undefined && data.text2 !== null) {
+                    first_played2 = true;
+                    $('#alert2').css('display', 'block');
+                }
+
+                console.log(first_played1, first_played2);
+                if (first_played1 && first_played2) {
+                    $('.first-word').removeClass('light');
+                    // console.log('complete')
+
+                    $(".announcement").css("display", "block");
+                    $("#temp1").css("display", "none");
+                    $("#temp2").css("display", "none");
+                    $(".alert").css('display', 'none');
+                    $('.submit').html('Got it!');
+
+                    second = true;
+                    
+                }
+
+                $('#first1').html(data.text1);
+                $('#first2').html(data.text2);
+            }
+
+            
+
+        }
+        
+        $("#reset").click(function(e){
+            // e.preventDefault()
+            chatSocket.send(JSON.stringify({
+                'reset': 'reset_msg'
+            }));
+            
+        })
+        
+
+        $('#submit1').click(function(e){
+            e.preventDefault();
+            var text1 = $('#text1').val()
+            // var text2 = $('#first2').html()
+
+            chatSocket.send(JSON.stringify({
+                'text1': text1,
+                // 'text2': text2
+            }));
+            $('#text1').val('')
+            
+            if (second){
+                console.log('second played')
+                $('#temp3').html(text1);
+            } else {
+                $('#temp1').html(text1);
+            }
+            
+
+
+        });
+
+        $('#submit2').click(function(e){
+            e.preventDefault();
+            var text = $('#text2').val()
+
+            chatSocket.send(JSON.stringify({
+                'text2': text
+            }));
+            $('#text2').val('')
+            if (second){
+                $('#temp4').html(text);
+            } else {
+                $('#temp2').html(text);
+            }
+        });
+    </script>
+</body>
+</html>
